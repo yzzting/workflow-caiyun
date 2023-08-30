@@ -2,10 +2,8 @@
  * @Author: YzzTing
  * @Date: 2023/8/29 12:14
  */
-const http = require('http')
-
-const BASEURL = 'api.interpreter.caiyunai.com'
-const TOKEN = process.env.Token
+const BASEURL = 'http://api.interpreter.caiyunai.com/v1'
+const TOKEN = tjs.getenv('Token')
 
 const pipe = (...functions) => input => functions.reduce((acc, fn) => fn(acc), input)
 const containsChinese = word => /^[\u4e00-\u9fa5]+$/.test(word)
@@ -13,43 +11,24 @@ const extractNonDigits = word => word.replace(/\d+/g, '')
 const pipeline = pipe(extractNonDigits, containsChinese)
 
 const postData = (path, data) => {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: BASEURL,
-      port: 80,
-      path: `/v1/${path}`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-authorization': `token:${TOKEN}`,
-      },
-    }
-
-    const req = http.request(options, (res) => {
-      let responseData = ''
-      res.on('data', (chunk) => {
-        responseData += chunk
-      })
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          reject(`${res.statusCode}`)
-        } else {
-          try {
-            resolve(JSON.parse(responseData))
-          } catch (e) {
-            reject(102)
-          }
-        }
-      })
-    })
-
-    req.on('error', (error) => {
-      reject('http error', error)
-    })
-
-    req.write(JSON.stringify(data))
-    req.end()
+  return fetch(`${BASEURL}/${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-authorization': `token:${TOKEN}`,
+    },
+    body: JSON.stringify(data)
   })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return response.json()
+    })
+    .catch(error => {
+      console.error('There was a problem with the fetch operation: ', error)
+      throw error
+    })
 }
 
 class Translate {
@@ -73,7 +52,7 @@ class Translate {
     return {
       items: [
         {
-          title: errorObj[code] || '查询失败, 请检查网络',
+          title: errorObj[code] || `查询失败, 请检查网络`,
         }
       ]
     }
@@ -119,13 +98,13 @@ class Translate {
         }
 
         if (dictionaryResult.dictionary && Object.keys(dictionaryResult.dictionary).length) {
-          dictionaryResult.dictionary.explanations.forEach((item) => {
+          dictionaryResult.dictionary.explanations?.forEach((item) => {
             this._result.items.push({
               title: item,
               arg: item,
             })
           })
-          dictionaryResult.dictionary.wqx_example.forEach((item) => {
+          dictionaryResult.dictionary.wqx_example?.forEach((item) => {
             this._result.items.push({
               title: item[1],
               subtitle: item[0],
@@ -148,7 +127,7 @@ class Translate {
   }
 }
 
-const source = Array.from(process.argv).pop()
+const source = Array.from(tjs.args).pop()
 const translate = new Translate(source)
 
 translate.query()
