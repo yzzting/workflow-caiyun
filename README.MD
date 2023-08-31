@@ -11,7 +11,7 @@
 
 ### 安装
 
-* Github Release: []()
+* [Github Release](https://github.com/yzzting/workflow-caiyun/releases/tag/v1.0.0)
 
 ### 配置
 
