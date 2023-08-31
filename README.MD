@@ -27,4 +27,4 @@
 ### 参考资料
 
 * [YoudaoTranslator](https://github.com/wensonsmith/YoudaoTranslator)
-* [AlfredWorkflow)](https://github.com/joetannenbaum/alfred-workflow)
+* [AlfredWorkflow](https://github.com/joetannenbaum/alfred-workflow)
